@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>계산기</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.4/math.js"></script>
+    <style>
+         :root {
+            --bg-color: #0d1117;
+            --calculator-bg: #161b22;
+            --button-bg: #21262d;
+            --button-color: #c9d1d9;
+            --button-hover: #30363d;
+            --display-bg: #0d1117;
+            --display-color: #58a6ff;
+            --primary-color: #1f6feb;
+            --accent-color: #f78166;
+            --secondary-color: #238636;
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --button-border: rgba(255, 255, 255, 0.1);
+            --history-color: #8b949e;
+        }
+        
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', sans-serif;
+        }
+        
+        .calculator {
+            width: 420px;
+            padding: 35px;
+            background-color: var(--calculator-bg);
+            border-radius: 30px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--button-border);
+        }
+        
+        #display {
+            width: 100%;
+            height: 90px;
+            margin-bottom: 25px;
+            font-size: 36px;
+            text-align: right;
+            padding: 25px;
+            border: 1px solid var(--button-border);
+            border-radius: 20px;
+            background-color: var(--display-bg);
+            color: var(--display-color);
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+            font-family: 'Consolas', monospace;
+            font-weight: 500;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+        
+        #history-display {
+            height: 30px;
+            margin-bottom: 10px;
+            color: var(--history-color);
+            opacity: 0.8;
+            text-align: right;
+            font-size: 16px;
+            padding: 0 15px;
+            font-family: 'Consolas', monospace;
+        }
+        
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+        }
+        
+        button {
+            padding: 20px;
+            font-size: 20px;
+            border: 1px solid var(--button-border);
+            border-radius: 18px;
+            background-color: var(--button-bg);
+            color: var(--button-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.5s;
+        }
+        
+        button:hover::after {
+            transform: translate(-50%, -50%) scale(2);
+        }
+        
+        button:hover {
+            background-color: var(--button-hover);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px var(--shadow-color);
+        }
+        
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 6px var(--shadow-color);
+        }
+        
+        .operator {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            font-weight: 600;
+        }
+        
+        .equals {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            font-weight: 600;
+        }
+        
+        .function {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .memory {
+            background-color: var(--button-bg);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .small-text {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        /* 툴팁 스타일 */
+        
+        .tooltip {
+            position: relative;
+        }
+        
+        .tooltip::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 5px 10px;
+            background-color: var(--button-bg);
+            color: var(--button-color);
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .tooltip:hover::before {
+            opacity: 1;
+            visibility: visible;
+            bottom: 120%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="calculator">
+        <div id="history-display"></div>
+        <input type="text" id="display" readonly>
+        <div class="buttons">
+            <button class="memory small-text" onclick="memoryOperation('MC')">MC</button>
+            <button class="memory small-text" onclick="memoryOperation('MR')">MR</button>
+            <button class="memory small-text" onclick="memoryOperation('M+')">M+</button>
+            <button class="memory small-text" onclick="memoryOperation('M-')">M-</button>
+            <button class="memory small-text" onclick="memoryOperation('MS')">MS</button>
+
+            <button class="function" onclick="calculate('factorial')">n!</button>
+            <button class="function tooltip" data-tooltip="제곱" onclick="calculate('square')">x²</button>
+            <button class="function" onclick="calculate('cube')">x³</button>
+            <button class="function small-text" onclick="calculate('power')">xʸ</button>
+            <button class="function small-text" onclick="calculate('root')">√x</button>
+
+            <button class="function small-text tooltip" data-tooltip="삼각함수 (각도)" onclick="calculate('sin')">sin</button>
+            <button class="function small-text" onclick="calculate('cos')">cos</button>
+            <button class="function small-text" onclick="calculate('tan')">tan</button>
+            <button class="function small-text" onclick="calculate('log')">log</button>
+            <button class="function small-text tooltip" data-tooltip="자연로그" onclick="calculate('ln')">ln</button>
+
+            <button class="function" onclick="clearDisplay()">C</button>
+            <button class="function" onclick="backspace()">⌫</button>
+            <button class="function" onclick="calculate('percent')">%</button>
+            <button class="function" onclick="addToDisplay('(')">(</button>
+            <button class="function" onclick="addToDisplay(')')">)</button>
+
+            <button onclick="addToDisplay('7')">7</button>
+            <button onclick="addToDisplay('8')">8</button>
+            <button onclick="addToDisplay('9')">9</button>
+            <button class="operator" onclick="addToDisplay('/')">/</button>
+            <button class="function small-text" onclick="calculate('1/x')">1/x</button>
+
+            <button onclick="addToDisplay('4')">4</button>
+            <button onclick="addToDisplay('5')">5</button>
+            <button onclick="addToDisplay('6')">6</button>
+            <button class="operator" onclick="addToDisplay('*')">×</button>
+            <button class="function" onclick="calculate('exp')">e</button>
+
+            <button onclick="addToDisplay('1')">1</button>
+            <button onclick="addToDisplay('2')">2</button>
+            <button onclick="addToDisplay('3')">3</button>
+            <button class="operator" onclick="addToDisplay('-')">-</button>
+            <button class="function" onclick="addToDisplay('3.141592')">π</button>
+
+            <button onclick="toggleSign()">±</button>
+            <button onclick="addToDisplay('0')">0</button>
+            <button onclick="addToDisplay('.')">.</button>
+            <button class="operator" onclick="addToDisplay('+')">+</button>
+            <button class="equals" onclick="calculate('=')">=</button>
+        </div>
+    </div>
+
+    <script>
+        // 수식 계산을 위한 math.js 설정
+        math.config({
+            number: 'BigNumber',
+            precision: 14
+        });
+
+        // 각도 단위 설정 (기본: 도(degree))
+        let isRadianMode = false;
+
+        // 계산 기록
+        let history = [];
+        const display = document.getElementById('display');
+        const historyDisplay = document.getElementById('history-display');
+        let memory = 0;
+
+        // 상수 정의
+        const CONSTANTS = {
+            e: Math.E,
+            pi: Math.PI
+        };
+
+        // 마지막 계산 결과 저장
+        let lastResult = 0;
+        let lastExpression = '';
+        let isNewCalculation = true;
+
+        function addToDisplay(value) {
+            if (display.value === 'Error' || (isNewCalculation && !isOperator(value))) {
+                display.value = '';
+                isNewCalculation = false;
+            }
+
+            // 연속된 연산자 입력 방지
+            if (isOperator(value) && isOperator(display.value[display.value.length - 1])) {
+                display.value = display.value.slice(0, -1);
+            }
+
+            // 숫자 앞에 불필요한 0 제거
+            if (value === '0' && display.value === '0') {
+                return;
+            }
+
+            display.value += value;
+        }
+
+        function isOperator(char) {
+            return ['+', '-', '*', '/', '^'].includes(char);
+        }
+
+        function clearDisplay() {
+            display.value = '';
+            historyDisplay.textContent = '';
+        }
+
+        function backspace() {
+            display.value = display.value.slice(0, -1);
+        }
+
+        function toggleSign() {
+            if (display.value) {
+                try {
+                    const currentValue = math.evaluate(display.value);
+                    display.value = (-currentValue).toString();
+                } catch (error) {
+                    display.value = 'Error';
+                }
+            }
+        }
+
+        function memoryOperation(op) {
+            try {
+                const value = math.evaluate(display.value) || 0;
+
+                switch (op) {
+                    case 'MC':
+                        memory = 0;
+                        break;
+                    case 'MR':
+                        display.value = memory.toString();
+                        break;
+                    case 'M+':
+                        memory = math.add(memory, value);
+                        break;
+                    case 'M-':
+                        memory = math.subtract(memory, value);
+                        break;
+                    case 'MS':
+                        memory = value;
+                        break;
+                }
+            } catch (error) {
+                display.value = 'Error';
+            }
+        }
+
+        function toRadians(degrees) {
+            return degrees * Math.PI / 180;
+        }
+
+        function toDegrees(radians) {
+            return radians * 180 / Math.PI;
+        }
+
+        function calculate(operation) {
+            try {
+                const expression = display.value;
+                if (!expression && operation !== 'exp' && operation !== 'power') {
+                    return;
+                }
+
+                let result;
+                let value = expression ? math.evaluate(expression) : lastResult;
+
+                switch (operation) {
+                    case 'sin':
+                    case 'cos':
+                    case 'tan':
+                        result = calculateTrigonometric(operation, value);
+                        break;
+                    case 'log':
+                    case 'ln':
+                        result = calculateLogarithm(operation, value);
+                        break;
+                    case 'square':
+                        result = math.pow(value, 2);
+                        addToHistory(`sqr(${expression}) = ${result}`);
+                        break;
+                    case 'cube':
+                        result = math.pow(value, 3);
+                        addToHistory(`cube(${expression}) = ${result}`);
+                        break;
+                    case 'root':
+                        result = calculateRoot(value);
+                        break;
+                    case 'factorial':
+                        result = calculateFactorial(value);
+                        break;
+                    case '1/x':
+                        result = calculateReciprocal(value);
+                        break;
+                    case 'percent':
+                        result = calculatePercent(value);
+                        break;
+                    case 'power':
+                        handlePower();
+                        return;
+                    case 'exp':
+                        handleExponential();
+                        return;
+                    case '=':
+                        result = evaluateExpression(expression);
+                        break;
+                    default:
+                        return;
+                }
+
+                if (result !== undefined) {
+                    lastResult = result;
+                    lastExpression = expression;
+                    display.value = formatResult(result);
+                    isNewCalculation = true;
+                }
+            } catch (error) {
+                console.error('Calculation error:', error);
+                display.value = 'Error';
+            }
+        }
+
+        function calculateTrigonometric(operation, value) {
+            const angle = isRadianMode ? value : toRadians(value);
+            let result;
+
+            switch (operation) {
+                case 'sin':
+                    result = Math.sin(angle);
+                    break;
+                case 'cos':
+                    result = Math.cos(angle);
+                    break;
+                case 'tan':
+                    result = Math.tan(angle);
+                    break;
+            }
+
+            addToHistory(`${operation}(${value}${isRadianMode ? ' rad' : '°'}) = ${result}`);
+            return result;
+        }
+
+        function calculateLogarithm(operation, value) {
+            if (value <= 0) throw new Error(`Invalid input for ${operation}`);
+
+            const result = operation === 'log' ? Math.log10(value) : Math.log(value);
+            addToHistory(`${operation}(${value}) = ${result}`);
+            return result;
+        }
+
+        function calculateRoot(value) {
+            if (value < 0) throw new Error('Invalid input for square root');
+            const result = Math.sqrt(value);
+            addToHistory(`√(${value}) = ${result}`);
+            return result;
+        }
+
+        function calculateFactorial(value) {
+            if (value < 0 || !Number.isInteger(value))
+                throw new Error('Invalid input for factorial');
+            if (value > 170)
+                throw new Error('Number too large for factorial');
+
+            const result = factorial(value);
+            addToHistory(`${value}! = ${result}`);
+            return result;
+        }
+
+        function calculateReciprocal(value) {
+            if (value === 0) throw new Error('Division by zero');
+            const result = 1 / value;
+            addToHistory(`1/${value} = ${result}`);
+            return result;
+        }
+
+        function calculatePercent(value) {
+            const result = value / 100;
+            addToHistory(`${value}% = ${result}`);
+            return result;
+        }
+
+        function handlePower() {
+            if (display.value && display.value !== 'Error') {
+                display.value += '^';
+            }
+        }
+
+        function handleExponential() {
+            if (display.value === '' || display.value === 'Error') {
+                display.value = 'e';
+            } else {
+                display.value += '*e';
+            }
+        }
+
+        function evaluateExpression(expression) {
+            if (!expression) return lastResult;
+
+            // 수식에 ^ 포함 시 ** 연산자로 변환
+            const processedExpression = expression.replace(/\^/g, '**')
+                .replace(/e/g, CONSTANTS.e.toString())
+                .replace(/pi/g, CONSTANTS.pi.toString());
+
+            const result = math.evaluate(processedExpression);
+            const formattedResult = formatResult(result);
+            addToHistory(`${expression} = ${formattedResult}`);
+            return result;
+        }
+
+        function formatResult(result) {
+            if (result === 0 || result === '0') return '0';
+
+            if (typeof result === 'number' || typeof result === 'object') {
+                // BigNumber를 일반 숫자로 변환
+                const numericResult = typeof result === 'object' ? result.toNumber() : result;
+
+                if (Math.abs(numericResult) < 1e-10) return '0';
+                if (Math.abs(numericResult) > 1e12) return numericResult.toExponential(8);
+
+                // 소수점 자리수 처리
+                const precisionResult = parseFloat(numericResult.toPrecision(12));
+
+                // 정수인 경우 소수점 제거
+                if (Number.isInteger(precisionResult)) {
+                    return precisionResult.toString();
+                }
+
+                return precisionResult.toString();
+            }
+            return result.toString();
+        }
+
+        function factorial(n) {
+            if (n < 0 || !Number.isInteger(n)) return NaN;
+            if (n === 0 || n === 1) return 1;
+            if (n > 170) throw new Error('Number too large for factorial');
+
+            let result = 1;
+            for (let i = 2; i <= n; i++) {
+                result *= i;
+            }
+            return result;
+        }
+
+        function addToHistory(text) {
+            history.push(text);
+            historyDisplay.textContent = text;
+        }
+
+        // 키보드 입력 처리 개선
+        document.addEventListener('keydown', (event) => {
+            const key = event.key;
+
+            // 기본 키 이벤트 방지
+            event.preventDefault();
+
+            // 숫자 및 기본 연산자
+            if (/^[0-9.]$/.test(key) || ['+', '-', '*', '/', '(', ')', '^'].includes(key)) {
+                addToDisplay(key);
+            } else {
+                // 특수 키
+                switch (key) {
+                    case 'Enter':
+                        calculate('=');
+                        break;
+                    case 'Backspace':
+                        backspace();
+                        break;
+                    case 'Escape':
+                        clearDisplay();
+                        break;
+                    case '%':
+                        calculate('percent');
+                        break;
+                    case 'e':
+                        handleExponential();
+                        break;
+                    case 'p':
+                        addToDisplay('pi');
+                        break;
+                    case '!':
+                        calculate('factorial');
+                        break;
+                }
+            }
+        });
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            clearDisplay();
+        });
+    </script>
+</body>
+
+</html>
