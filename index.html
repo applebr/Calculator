@@ -10,19 +10,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.4/math.js"></script>
     <style>
          :root {
-            --bg-color: #0d1117;
-            --calculator-bg: #161b22;
-            --button-bg: #21262d;
-            --button-color: #c9d1d9;
-            --button-hover: #30363d;
-            --display-bg: #0d1117;
-            --display-color: #58a6ff;
-            --primary-color: #1f6feb;
-            --accent-color: #f78166;
-            --secondary-color: #238636;
+            --bg-color: #1a1a2e;
+            --calculator-bg: #16213e;
+            --button-bg: #1f2937;
+            --button-color: #e2e8f0;
+            --button-hover: #2d3748;
+            --display-bg: #0f172a;
+            --display-color: #60a5fa;
+            --primary-color: #8b5cf6;
+            --accent-color: #c084fc;
+            --secondary-color: #f59e0b;
             --shadow-color: rgba(0, 0, 0, 0.4);
             --button-border: rgba(255, 255, 255, 0.1);
-            --history-color: #8b949e;
+            --history-color: #94a3b8;
         }
         
         body {
@@ -38,10 +38,11 @@
         .calculator {
             width: 420px;
             padding: 35px;
-            background-color: var(--calculator-bg);
+            background: linear-gradient(145deg, #16213e, #1a1a2e);
             border-radius: 30px;
             box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
             border: 1px solid var(--button-border);
+            backdrop-filter: blur(10px);
         }
         
         #display {
@@ -53,7 +54,7 @@
             padding: 25px;
             border: 1px solid var(--button-border);
             border-radius: 20px;
-            background-color: var(--display-bg);
+            background: linear-gradient(145deg, #0f172a, #1e293b);
             color: var(--display-color);
             box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
             font-family: 'Consolas', monospace;
@@ -84,7 +85,7 @@
             font-size: 20px;
             border: 1px solid var(--button-border);
             border-radius: 18px;
-            background-color: var(--button-bg);
+            background: linear-gradient(145deg, #1f2937, #1a1a2e);
             color: var(--button-color);
             cursor: pointer;
             transition: all 0.3s ease;
@@ -115,7 +116,7 @@
         }
         
         button:hover {
-            background-color: var(--button-hover);
+            background: linear-gradient(145deg, #2d3748, #1f2937);
             transform: translateY(-3px);
             box-shadow: 0 8px 15px var(--shadow-color);
         }
@@ -133,7 +134,7 @@
         }
         
         .equals {
-            background-color: var(--primary-color);
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
             color: white;
             border: none;
             font-weight: 600;
@@ -172,9 +173,10 @@
             left: 50%;
             transform: translateX(-50%);
             padding: 5px 10px;
-            background-color: var(--button-bg);
+            background: linear-gradient(145deg, #1f2937, #2d3748);
             color: var(--button-color);
             border-radius: 5px;
+            border: 1px solid var(--button-border);
             font-size: 12px;
             white-space: nowrap;
             opacity: 0;
